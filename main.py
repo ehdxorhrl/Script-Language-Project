@@ -1,4 +1,5 @@
 from tkinter import *
+from PIL import Image, ImageTk
 
 def open_second_window():
     second_window = Toplevel()
@@ -86,12 +87,22 @@ def MainGUI():
     contact_frame = Frame(window)
     contact_frame.place(x=10, y=730, width=580, height=50)
 
-    gmail_button = Button(contact_frame, text="Gmail")
+    gmail_image = Image.open("지메일.png")
+    gmail_image = gmail_image.resize((40, 40), Image.Resampling.LANCZOS)  # Adjust size as needed
+    gmail_photo = ImageTk.PhotoImage(gmail_image)
+
+    telegram_image = Image.open("텔레그램.png")
+    telegram_image = telegram_image.resize((40, 40), Image.Resampling.LANCZOS)  # Adjust size as needed
+    telegram_photo = ImageTk.PhotoImage(telegram_image)
+
+    gmail_button = Button(contact_frame, image=gmail_photo)
     gmail_button.pack(side=LEFT, padx=20, pady=5, expand=True)
 
-    telegram_button = Button(contact_frame, text="Telegram")
+    telegram_button = Button(contact_frame, image=telegram_photo)
     telegram_button.pack(side=RIGHT, padx=20, pady=5, expand=True)
 
+    gmail_button.image = gmail_photo
+    telegram_button.image = telegram_photo
 
     window.mainloop()
 
