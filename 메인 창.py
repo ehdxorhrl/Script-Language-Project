@@ -157,9 +157,16 @@ def search_beach_info():
     # 파고 정보 업데이트
     try:
         wh_value = wave_data['response']['body']['items']['item'][0]['wh']
-        wave_label.config(text=f"파고 정보: {wh_value} M")
+        wave_label.config(text=f"파고 정보 : {wh_value} M")
     except (KeyError, IndexError) as e:
         wave_label.config(text="파고 정보를 가져올 수 없습니다.")
+
+    # 수온 정보 업데이트
+    try:
+        tw_value = water_temp_data['response']['body']['items']['item'][0]['tw']
+        water_temp_label.config(text=f"수온 정보 : {tw_value} °C")
+    except (KeyError, IndexError) as e:
+        water_temp_label.config(text="수온 정보를 가져올 수 없습니다.")
 
 def open_second_window():
     second_window = Toplevel()
@@ -172,7 +179,7 @@ def open_second_window():
     close_button.pack(pady=10)
 
 def MainGUI():
-    global location_entry, nearby_listbox, wave_label
+    global location_entry, nearby_listbox, wave_label, water_temp_label
 
     window = Tk()
     window.geometry("600x800")
