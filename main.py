@@ -17,7 +17,13 @@ zoom = 13
 def find_nearest_beaches(df, user_location):
     pass
 def get_lat_lng(address):
-    pass
+    geocode_result = gmaps.geocode(address)
+    if not geocode_result:
+        print(f"주소를 찾을 수 없습니다: {address}")
+        return None
+
+    location = geocode_result[0]['geometry']['location']
+    return (location['lat'], location['lng'])
 
 def load_beach_data(file_path):
     df = pd.read_excel(file_path)
@@ -27,7 +33,13 @@ def update_listbox(location):
     pass
 
 def search_location():
-    pass
+    # 위치 검색 버튼 클릭 시 실행되는 함수
+    location = get_lat_lng(location_entry.get())
+    print(location)
+    # nearest_beaches = find_nearest_beaches(beach_data, location)
+    # 상위 20개의 해수욕장만 선택합니다.
+    top_20_beaches = nearest_beaches.head(20)
+    update_listbox(top_20_beaches)
 
 def on_listbox_select(event):
     pass
