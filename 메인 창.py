@@ -168,6 +168,22 @@ def search_beach_info():
     except (KeyError, IndexError) as e:
         water_temp_label.config(text="수온 정보를 가져올 수 없습니다.")
 
+    # 조석 정보 업데이트
+    try:
+        tide_items = tide_data['response']['body']['items']['item']
+        tide_info = ""
+        for item in tide_items:
+            if item['tiType'].startswith("ET"):
+                tiType = "저(간조)"
+            elif item['tiType'].startswith("FT"):
+                tiType = "고(만조)"
+            else:
+                tiType = "알 수 없음"
+            tide_info += f"{item['tiStnld']} - {item['tiTime']} - {tiType} - {item['tilevel']} cm\n"
+        tide_label.config(text=f"조석 정보:\n{tide_info}")
+    except (KeyError, IndexError) as e:
+        tide_label.config(text="조석 정보를 가져올 수 없습니다.")
+
 def open_second_window():
     second_window = Toplevel()
     second_window.title("두번째 창")
@@ -179,7 +195,7 @@ def open_second_window():
     close_button.pack(pady=10)
 
 def MainGUI():
-    global location_entry, nearby_listbox, wave_label, water_temp_label
+    global location_entry, nearby_listbox, wave_label, water_temp_label, tide_label
 
     window = Tk()
     window.geometry("600x800")
@@ -224,10 +240,10 @@ def MainGUI():
     image_label = Label(image_frame, text="이미지")
     image_label.pack(expand=True)
 
-    fishing_frame = Frame(bottom_frame, bg="white")
-    fishing_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
-    fishing_label = Label(fishing_frame, text="조석 정보")
-    fishing_label.pack(expand=True)
+    tide_frame = Frame(bottom_frame, bg="white")
+    tide_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+    tide_label = Label(tide_frame, text="조석 정보")
+    tide_label.pack(expand=True)
 
     water_temp_frame = Frame(bottom_frame, bg="white")
     water_temp_frame.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
