@@ -15,7 +15,11 @@ zoom = 13
 
 # 해수욕장과의 거리를 계산하여 정렬하는 함수
 def find_nearest_beaches(df, user_location):
-    pass
+    df['distance'] = df.apply(
+        lambda row: geodesic(user_location, (row['위도'], row['경도'])).km, axis=1
+    )
+    sorted_df = df.sort_values(by='distance').reset_index(drop=True)
+    return sorted_df
 def get_lat_lng(address):
     geocode_result = gmaps.geocode(address)
     if not geocode_result:
@@ -30,13 +34,16 @@ def load_beach_data(file_path):
     return df
 
 def update_listbox(location):
-    pass
+    # Listbox 업데이트 함수
+    nearby_listbox.delete(0, END)
+    for i, row in location.iterrows():
+        nearby_listbox.insert(END, f"{i + 1}. {row['해수욕장']} - 거리: {row['distance']:.2f} km")
 
 def search_location():
     # 위치 검색 버튼 클릭 시 실행되는 함수
     location = get_lat_lng(location_entry.get())
     print(location)
-    # nearest_beaches = find_nearest_beaches(beach_data, location)
+    nearest_beaches = find_nearest_beaches(beach_data, location)
     # 상위 20개의 해수욕장만 선택합니다.
     top_20_beaches = nearest_beaches.head(20)
     update_listbox(top_20_beaches)
