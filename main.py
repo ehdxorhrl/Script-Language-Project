@@ -13,6 +13,196 @@ Google_API_Key = 'AIzaSyB3wJJMRzVwJBGLJXkfLOEHXWHH2nV6lXw'
 gmaps = googlemaps.Client(key=Google_API_Key)
 zoom = 13
 
+def get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_num, num_of_rows=10, page_no=1, data_type='JSON'):
+    url = "http://apis.data.go.kr/1360000/BeachInfoservice/getUltraSrtFcstBeach"
+    params = {
+        'serviceKey': service_key,
+        'base_date': base_date,
+        'base_time': base_time,
+        'beach_num': beach_num,
+        'numOfRows': num_of_rows,
+        'pageNo': page_no,
+        'dataType': data_type
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        if data_type == 'JSON':
+            return response.json()
+        elif data_type == 'XML':
+            return response.text
+    else:
+        return f"Error: {response.status_code}"
+
+def get_vilage_fcst_beach(service_key, base_date, base_time, beach_num, num_of_rows=10, page_no=1, data_type='JSON'):
+    url = "http://apis.data.go.kr/1360000/BeachInfoservice/getVilageFcstBeach"
+    params = {
+        'serviceKey': service_key,
+        'base_date': base_date,
+        'base_time': base_time,
+        'beach_num': beach_num,
+        'numOfRows': num_of_rows,
+        'pageNo': page_no,
+        'dataType': data_type
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        if data_type == 'JSON':
+            return response.json()
+        elif data_type == 'XML':
+            return response.text
+    else:
+        return f"Error: {response.status_code}"
+
+def get_wh_buoy_beach(service_key, search_time, beach_num, num_of_rows=10, page_no=1, data_type='JSON'):
+    url = "http://apis.data.go.kr/1360000/BeachInfoservice/getWhBuoyBeach"
+    params = {
+        'serviceKey': service_key,
+        'searchTime': search_time,
+        'beach_num': beach_num,
+        'numOfRows': num_of_rows,
+        'pageNo': page_no,
+        'dataType': data_type
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        if data_type == 'JSON':
+            return response.json()
+        elif data_type == 'XML':
+            return response.text
+    else:
+        return f"Error: {response.status_code}"
+
+def get_tide_info_beach(service_key, base_date, beach_num, num_of_rows=10, page_no=1, data_type='JSON'):
+    url = "http://apis.data.go.kr/1360000/BeachInfoservice/getTideInfoBeach"
+    params = {
+        'serviceKey': service_key,
+        'base_date': base_date,
+        'beach_num': beach_num,
+        'numOfRows': num_of_rows,
+        'pageNo': page_no,
+        'dataType': data_type
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        if data_type == 'JSON':
+            return response.json()
+        elif data_type == 'XML':
+            return response.text
+    else:
+        return f"Error: {response.status_code}"
+
+def get_sun_info_beach(service_key, base_date, beach_num, num_of_rows=10, page_no=1, data_type='JSON'):
+    url = "http://apis.data.go.kr/1360000/BeachInfoservice/getSunInfoBeach"
+    params = {
+        'serviceKey': service_key,
+        'base_date': base_date,
+        'beach_num': beach_num,
+        'numOfRows': num_of_rows,
+        'pageNo': page_no,
+        'dataType': data_type
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        if data_type == 'JSON':
+            return response.json()
+        elif data_type == 'XML':
+            return response.text
+    else:
+        return f"Error: {response.status_code}"
+
+def get_tw_buoy_beach(service_key, search_time, beach_num, num_of_rows=10, page_no=1, data_type='JSON'):
+    url = "http://apis.data.go.kr/1360000/BeachInfoservice/getTwBuoyBeach"
+    params = {
+        'serviceKey': service_key,
+        'searchTime': search_time,
+        'beach_num': beach_num,
+        'numOfRows': num_of_rows,
+        'pageNo': page_no,
+        'dataType': data_type
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        if data_type == 'JSON':
+            return response.json()
+        elif data_type == 'XML':
+            return response.text
+    else:
+        return f"Error: {response.status_code}"
+
+def search_beach_info():
+    service_key = "J0vWouXboOOX6XyFANTjJQuyZagHIYvxwVy2K6LaSXLyCCPho9deGFO51xcBuhqYDTXAMwMe7uQCY5G5LL1bDw=="
+    base_date = "20220622"
+    base_time = "1230"
+    search_time = "202205011600"
+
+    # Collecting data from all APIs
+    forecast_data = get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_code)
+    short_term_forecast_data = get_vilage_fcst_beach(service_key, base_date, base_time, beach_code)
+    wave_data = get_wh_buoy_beach(service_key, search_time, beach_code)
+    tide_data = get_tide_info_beach(service_key, base_date, beach_code)
+    sun_data = get_sun_info_beach(service_key, base_date, beach_code)
+    water_temp_data = get_tw_buoy_beach(service_key, search_time, beach_code)
+
+    # Update the UI with the fetched data
+    # nearby_listbox.delete(0, END)
+    # nearby_listbox.insert(END, f'Ultra Short Forecast: {forecast_data}')
+    # nearby_listbox.insert(END, f'Short Term Forecast: {short_term_forecast_data}')
+    # nearby_listbox.insert(END, f'Wave Info: {wave_data}')
+    # nearby_listbox.insert(END, f'Tide Info: {tide_data}')
+    # nearby_listbox.insert(END, f'Sun Info: {sun_data}')
+    # nearby_listbox.insert(END, f'Water Temperature: {water_temp_data}')
+
+    # 파고 정보 업데이트
+    try:
+        wh_value = wave_data['response']['body']['items']['item'][0]['wh']
+        wave_label.config(text=f"파고 정보 : {wh_value} M")
+    except (KeyError, IndexError) as e:
+        wave_label.config(text="파고 정보를 가져올 수 없습니다.")
+
+    # 수온 정보 업데이트
+    try:
+        tw_value = water_temp_data['response']['body']['items']['item'][0]['tw']
+        water_temp_label.config(text=f"수온 정보 : {tw_value} °C")
+    except (KeyError, IndexError) as e:
+        water_temp_label.config(text="수온 정보를 가져올 수 없습니다.")
+
+    # 조석 정보 업데이트
+    try:
+        tide_items = tide_data['response']['body']['items']['item']
+        tide_info = ""
+        for item in tide_items:
+            if item['tiType'].startswith("ET"):
+                tiType = "저(간조)"
+            elif item['tiType'].startswith("FT"):
+                tiType = "고(만조)"
+            else:
+                tiType = "알 수 없음"
+            tide_info += f"{item['tiStnld']} - {item['tiTime']} - {tiType} - {item['tilevel']} cm\n"
+        tide_label.config(text=f"조석 정보\n{tide_info}")
+    except (KeyError, IndexError) as e:
+        tide_label.config(text="조석 정보를 가져올 수 없습니다.")
+
+    # 일출일몰 정보 업데이트
+    try:
+        sun_info = sun_data['response']['body']['items']['item'][0]
+        sunrise = sun_info['sunrise']
+        sunset = sun_info['sunset']
+        sunrise_sunset_label.config(text=f"일출 시간 : {sunrise}\n일몰 시간 : {sunset}")
+    except (KeyError, IndexError) as e:
+        sunrise_sunset_label.config(text="일출일몰 정보를 가져올 수 없습니다.")
+
 # 해수욕장과의 거리를 계산하여 정렬하는 함수
 def find_nearest_beaches(df, user_location):
     df['distance'] = df.apply(
@@ -49,6 +239,7 @@ def search_location():
     update_listbox(top_20_beaches)
 
 def on_listbox_select(event):
+    global beach_code
     # Listbox 항목 선택 시 실행되는 함수
     selected_index = nearby_listbox.curselection()
     if not selected_index:
@@ -59,6 +250,11 @@ def on_listbox_select(event):
     selected_row = beach_data[beach_data['해수욕장'] == beach_name].iloc[0]
     beach_location = (selected_row['위도'], selected_row['경도'])
     get_map(beach_location)
+
+    beach_code = selected_row.name + 1
+
+    search_beach_info()
+
 def get_map(location):
     # Google Maps Static API URL 생성
     map_url = f"https://maps.googleapis.com/maps/api/staticmap?center={location[0]},{location[1]}&zoom={zoom}&size=600x300&maptype=roadmap&markers=color:red%7Clabel:S%7C{location[0]},{location[1]}&key={Google_API_Key}"
@@ -108,6 +304,7 @@ def open_input_telegramID():
     close_button.pack(pady=10)
 
 def MainGUI():
+    global location_entry, nearby_listbox, wave_label, water_temp_label, tide_label, sunrise_sunset_label, map_label
     window = Tk()
     window.geometry("600x800")
     window.title("놀러와요 해수욕장")
@@ -120,7 +317,6 @@ def MainGUI():
     location_label = Label(location_frame, text="위치 입력")
     location_label.pack(side=LEFT, padx=5)
 
-    global location_entry  # 전역 변수로 지정
     location_entry = Entry(location_frame)
     location_entry.pack(side=LEFT, padx=5, fill=X, expand=True)
 
@@ -134,13 +330,11 @@ def MainGUI():
     listbox_scrollbar = Scrollbar(listbox_frame)
     listbox_scrollbar.pack(side="right", fill="y")
 
-    global nearby_listbox
     nearby_listbox = Listbox(listbox_frame, selectmode="extended", height=10, yscrollcommand=listbox_scrollbar.set)
     nearby_listbox.pack(fill=BOTH, expand=True)
     nearby_listbox.bind('<<ListboxSelect>>', on_listbox_select)
 
     #지도
-    global map_label
     map_frame = Frame(window, bg="white")
     map_frame.place(x=10, y=180, width=580, height=250)
 
@@ -159,10 +353,10 @@ def MainGUI():
     image_label = Label(image_frame, text="이미지")
     image_label.pack(expand=True)
 
-    fishing_frame = Frame(bottom_frame, bg="white")
-    fishing_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
-    fishing_label = Label(fishing_frame, text="조석 정보")
-    fishing_label.pack(expand=True)
+    tide_frame = Frame(bottom_frame, bg="white")
+    tide_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+    tide_label = Label(tide_frame, text="조석 정보")
+    tide_label.pack(expand=True)
 
     water_temp_frame = Frame(bottom_frame, bg="white")
     water_temp_frame.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
