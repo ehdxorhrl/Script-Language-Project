@@ -142,7 +142,7 @@ def search_beach_info():
     short_term_forecast_data = get_vilage_fcst_beach(service_key, base_date, base_time, beach_code)
     wave_data = get_wh_buoy_beach(service_key, search_time, beach_code)
     tide_data = get_tide_info_beach(service_key, base_date, beach_code)
-    sun_info_data = get_sun_info_beach(service_key, base_date, beach_code)
+    sun_data = get_sun_info_beach(service_key, base_date, beach_code)
     water_temp_data = get_tw_buoy_beach(service_key, search_time, beach_code)
 
     # Update the UI with the fetched data
@@ -151,7 +151,7 @@ def search_beach_info():
     nearby_listbox.insert(END, f'Short Term Forecast: {short_term_forecast_data}')
     nearby_listbox.insert(END, f'Wave Info: {wave_data}')
     nearby_listbox.insert(END, f'Tide Info: {tide_data}')
-    nearby_listbox.insert(END, f'Sun Info: {sun_info_data}')
+    nearby_listbox.insert(END, f'Sun Info: {sun_data}')
     nearby_listbox.insert(END, f'Water Temperature: {water_temp_data}')
 
     # 파고 정보 업데이트
@@ -180,9 +180,18 @@ def search_beach_info():
             else:
                 tiType = "알 수 없음"
             tide_info += f"{item['tiStnld']} - {item['tiTime']} - {tiType} - {item['tilevel']} cm\n"
-        tide_label.config(text=f"조석 정보:\n{tide_info}")
+        tide_label.config(text=f"조석 정보\n{tide_info}")
     except (KeyError, IndexError) as e:
         tide_label.config(text="조석 정보를 가져올 수 없습니다.")
+
+    # 일출일몰 정보 업데이트
+    try:
+        sun_info = sun_data['response']['body']['items']['item'][0]
+        sunrise = sun_info['sunrise']
+        sunset = sun_info['sunset']
+        sunrise_sunset_label.config(text=f"일출 시간 : {sunrise}\n일몰 시간 : {sunset}")
+    except (KeyError, IndexError) as e:
+        sunrise_sunset_label.config(text="일출일몰 정보를 가져올 수 없습니다.")
 
 def open_second_window():
     second_window = Toplevel()
@@ -195,7 +204,7 @@ def open_second_window():
     close_button.pack(pady=10)
 
 def MainGUI():
-    global location_entry, nearby_listbox, wave_label, water_temp_label, tide_label
+    global location_entry, nearby_listbox, wave_label, water_temp_label, tide_label, sunrise_sunset_label
 
     window = Tk()
     window.geometry("600x800")
