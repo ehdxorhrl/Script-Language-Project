@@ -49,10 +49,31 @@ def search_location():
     update_listbox(top_20_beaches)
 
 def on_listbox_select(event):
-    pass
+    # Listbox 항목 선택 시 실행되는 함수
+    selected_index = nearby_listbox.curselection()
+    if not selected_index:
+        return
 
+    selected_beach = nearby_listbox.get(selected_index)
+    beach_name = selected_beach.split(".")[1].split(" -")[0].strip()
+    selected_row = beach_data[beach_data['해수욕장'] == beach_name].iloc[0]
+    beach_location = (selected_row['위도'], selected_row['경도'])
+    get_map(beach_location)
 def get_map(location):
-    pass
+    # Google Maps Static API URL 생성
+    map_url = f"https://maps.googleapis.com/maps/api/staticmap?center={location[0]},{location[1]}&zoom={zoom}&size=600x300&maptype=roadmap&markers=color:red%7Clabel:S%7C{location[0]},{location[1]}&key={Google_API_Key}"
+
+    # 지도 이미지 요청
+    response = requests.get(map_url)
+    image_data = response.content
+
+    # 이미지를 PIL 형식으로 변환
+    image = Image.open(io.BytesIO(image_data))
+    map_image = ImageTk.PhotoImage(image)
+
+    # 이미지 업데이트
+    map_label.config(image=map_image)
+    map_label.image = map_image
 
 def open_weather_inform():
     second_window = Toplevel()
