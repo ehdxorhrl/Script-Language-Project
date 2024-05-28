@@ -142,27 +142,19 @@ def get_tw_buoy_beach(service_key, search_time, beach_num, num_of_rows=10, page_
         return f"Error: {response.status_code}"
 
 def search_beach_info():
+    global weather_data
     service_key = "J0vWouXboOOX6XyFANTjJQuyZagHIYvxwVy2K6LaSXLyCCPho9deGFO51xcBuhqYDTXAMwMe7uQCY5G5LL1bDw=="
-    base_date = "20220622"
+    base_date = "20240528"
     base_time = "1230"
     search_time = "202205011600"
 
     # Collecting data from all APIs
-    forecast_data = get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_code)
+    weather_data = get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_code)
     short_term_forecast_data = get_vilage_fcst_beach(service_key, base_date, base_time, beach_code)
     wave_data = get_wh_buoy_beach(service_key, search_time, beach_code)
     tide_data = get_tide_info_beach(service_key, base_date, beach_code)
     sun_data = get_sun_info_beach(service_key, base_date, beach_code)
     water_temp_data = get_tw_buoy_beach(service_key, search_time, beach_code)
-
-    # Update the UI with the fetched data
-    # nearby_listbox.delete(0, END)
-    # nearby_listbox.insert(END, f'Ultra Short Forecast: {forecast_data}')
-    # nearby_listbox.insert(END, f'Short Term Forecast: {short_term_forecast_data}')
-    # nearby_listbox.insert(END, f'Wave Info: {wave_data}')
-    # nearby_listbox.insert(END, f'Tide Info: {tide_data}')
-    # nearby_listbox.insert(END, f'Sun Info: {sun_data}')
-    # nearby_listbox.insert(END, f'Water Temperature: {water_temp_data}')
 
     # 파고 정보 업데이트
     try:
@@ -273,10 +265,57 @@ def get_map(location):
 
 def open_weather_inform():
     second_window = Toplevel()
-    second_window.title("두번째 창")
+    second_window.title("날씨 예보")
+    second_window.geometry("400x400")
 
-    label = Label(second_window, text="여기는 두번째 창입니다.")
-    label.pack(pady=20)
+    # 초단기 예보
+    forecast_data = {
+        'T1H': None,
+        'RN1': None,
+        'SKY': None,
+        'UUU': None,
+        'VVV': None,
+        'REH': None,
+        'PTY': None,
+        'VEC': None,
+        'WSD': None
+    }
+    pty_dict = {
+        '0': '없음',
+        '1': '비',
+        '2': '비/눈',
+        '3': '눈',
+        '5': '빗방울',
+        '6': '빗방울눈날림',
+        '7': '눈날림'
+    }
+
+    try:
+        items = weather_data['response']['body']['items']['item']
+        for item in items:
+            category = item['category']
+            if category in forecast_data:
+                if category == 'PTY':
+                    forecast_data[category] = pty_dict.get(item['fcstValue'], '알 수 없음')
+                else:
+                    forecast_data[category] = item['fcstValue']
+
+        forecast_info = (
+            f"기온: {forecast_data['T1H']} ℃\n"
+            f"1시간 강수량: {forecast_data['RN1']} mm\n"
+            f"하늘상태: {forecast_data['SKY']}\n"
+            f"동서바람성분: {forecast_data['UUU']} m/s\n"
+            f"남북바람성분: {forecast_data['VVV']} m/s\n"
+            f"습도: {forecast_data['REH']} %\n"
+            f"강수형태: {forecast_data['PTY']}\n"
+            f"풍향: {forecast_data['VEC']} deg\n"
+            f"풍속: {forecast_data['WSD']} m/s\n"
+        )
+        weather_label = Label(second_window, text=forecast_info)
+        weather_label.pack(pady=20)
+    except (KeyError, IndexError) as e:
+        weather_label = Label(second_window, text="초단기예보 정보를 가져올 수 없습니다.")
+        weather_label.pack(pady=20)
 
     close_button = Button(second_window, text="닫기", command=second_window.destroy)
     close_button.pack(pady=10)
