@@ -1,10 +1,13 @@
 from tkinter import *
 import requests
 import io
+import os
 from PIL import Image, ImageTk
 import googlemaps
 import pandas as pd
 from geopy.distance import geodesic
+from bs4 import BeautifulSoup
+
 
 # Google API 키 설정
 Google_API_Key = 'AIzaSyB3wJJMRzVwJBGLJXkfLOEHXWHH2nV6lXw'
@@ -144,7 +147,7 @@ def get_tw_buoy_beach(service_key, search_time, beach_num, num_of_rows=10, page_
 def search_beach_info():
     global weather_data
     service_key = "J0vWouXboOOX6XyFANTjJQuyZagHIYvxwVy2K6LaSXLyCCPho9deGFO51xcBuhqYDTXAMwMe7uQCY5G5LL1bDw=="
-    base_date = "20240528"
+    base_date = "20240602"
     base_time = "1230"
     search_time = "202205011600"
 
@@ -231,7 +234,7 @@ def search_location():
     update_listbox(top_20_beaches)
 
 def on_listbox_select(event):
-    global beach_code
+    global beach_code, beach_name, search_term, image_path
     # Listbox 항목 선택 시 실행되는 함수
     selected_index = nearby_listbox.curselection()
     if not selected_index:
@@ -246,6 +249,17 @@ def on_listbox_select(event):
     beach_code = selected_row.name + 1
 
     search_beach_info()
+
+    if image_path:
+        os.remove(image_path)
+        image_path = ""
+
+    search_term = beach_name
+    download_image(search_term, num_images=1)
+    image_path = f'images/{search_term}_1.jpg'
+
+    display_image(image_path, image_frame, 250, 90)
+
 
 def get_map(location):
     # Google Maps Static API URL 생성
@@ -342,12 +356,42 @@ def open_input_telegramID():
     close_button = Button(telegram_window, text="닫기", command=telegram_window.destroy)
     close_button.pack(pady=10)
 
+def download_image(search_term, num_images=5):
+    url = f"https://www.google.com/search?q={search_term}&tbm=isch"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    image_tags = soup.find_all("img", limit=num_images + 1)
+    image_urls = [img['src'] for img in image_tags[1:num_images + 1]]
+
+    os.makedirs('images', exist_ok=True)
+
+    for i, img_url in enumerate(image_urls):
+        img_data = requests.get(img_url).content
+        with open(f'images/{search_term}_{i + 1}.jpg', 'wb') as handler:
+            handler.write(img_data)
+        print(f"Image {i + 1} downloaded")
+
+
+def display_image(image_path, parent_frame, width, height):
+    for widget in parent_frame.winfo_children():
+        widget.destroy()
+    img = Image.open(image_path)
+    im = ImageTk.PhotoImage(img)
+
+    image_label = Label(parent_frame, image=im)
+    image_label.image = im
+    image_label.pack()
+
+
 def MainGUI():
-    global location_entry, nearby_listbox, wave_label, water_temp_label, tide_label, sunrise_sunset_label, map_label
+    global location_entry, nearby_listbox, wave_label, water_temp_label, tide_label, sunrise_sunset_label, map_label, image_frame, search_term, image_path
     window = Tk()
     window.geometry("600x800")
     window.title("놀러와요 해수욕장")
     window.iconbitmap("icon.ico")
+    window.resizable(False, False)
 
     # 위치 입력 및 검색
     location_frame = Frame(window)
@@ -387,10 +431,8 @@ def MainGUI():
     weather_button = Button(bottom_frame, text="날씨 예보", command=open_weather_inform)
     weather_button.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
-    image_frame = Frame(bottom_frame, bg="white")
+    image_frame = Frame(bottom_frame, bg="white", width=200, height=90)
     image_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
-    image_label = Label(image_frame, text="이미지")
-    image_label.pack(expand=True)
 
     tide_frame = Frame(bottom_frame, bg="white")
     tide_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
@@ -431,7 +473,7 @@ def MainGUI():
     telegram_image = telegram_image.resize((40, 40), Image.Resampling.LANCZOS)  # Adjust size as needed
     telegram_photo = ImageTk.PhotoImage(telegram_image)
 
-    gmail_button = Button(contact_frame, image=gmail_photo,command=open_input_gmail)
+    gmail_button = Button(contact_frame, image=gmail_photo, command=open_input_gmail)
     gmail_button.pack(side=LEFT, padx=20, pady=5, expand=True)
 
     telegram_button = Button(contact_frame, image=telegram_photo, command=open_input_telegramID)
@@ -441,6 +483,10 @@ def MainGUI():
     telegram_button.image = telegram_photo
 
     window.mainloop()
+
+global search_term, image_path
+search_term = None
+image_path = ""
 
 
 excel_file_path = "기상청48_전국해수욕장_날씨_조회서비스_오픈API활용가이드_최종/기상청48_전국해수욕장_날씨_조회서비스_위경도.xlsx"
