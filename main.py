@@ -12,7 +12,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-import spam
+import telepot
+from telepot.loop import MessageLoop
+import requests
+import sys
+sys.path.append(r'C:\Python\스크립트 언어\Script-Language-Project')
+#import spam
 
 # Google API 키 설정
 Google_API_Key = 'AIzaSyB3wJJMRzVwJBGLJXkfLOEHXWHH2nV6lXw'
@@ -20,6 +25,10 @@ Google_API_Key = 'AIzaSyB3wJJMRzVwJBGLJXkfLOEHXWHH2nV6lXw'
 # Google Maps 클라이언트 초기화
 gmaps = googlemaps.Client(key=Google_API_Key)
 zoom = 13
+
+# 봇의 API 토큰
+bot = telepot.Bot('7314248046:AAFoNlzyPuPH07inksK3kD6SI8D569NMXwg')
+
 
 def send_email_gmail(subject, body, to_email, from_email, password, attachment_path=None):
     # SMTP 서버와 포트 설정
@@ -187,7 +196,7 @@ def get_tw_buoy_beach(service_key, search_time, beach_num, num_of_rows=10, page_
 def search_beach_info():
     global weather_data
     service_key = "J0vWouXboOOX6XyFANTjJQuyZagHIYvxwVy2K6LaSXLyCCPho9deGFO51xcBuhqYDTXAMwMe7uQCY5G5LL1bDw=="
-    base_date = "20240602"
+    base_date = "20240603"
     base_time = "1230"
     search_time = "202205011600"
 
@@ -199,19 +208,25 @@ def search_beach_info():
     sun_data = get_sun_info_beach(service_key, base_date, beach_code)
     water_temp_data = get_tw_buoy_beach(service_key, search_time, beach_code)
 
+    info_message = ""
+
     # 파고 정보 업데이트
     try:
         wh_value = wave_data['response']['body']['items']['item'][0]['wh']
         wave_label.config(text=f"파고 정보 : {wh_value} M")
+        info_message += f"파고 정보: {wh_value} M\n"
     except (KeyError, IndexError) as e:
         wave_label.config(text="파고 정보를 가져올 수 없습니다.")
+        info_message += "파고 정보를 가져올 수 없습니다.\n"
 
     # 수온 정보 업데이트
     try:
         tw_value = water_temp_data['response']['body']['items']['item'][0]['tw']
         water_temp_label.config(text=f"수온 정보 : {tw_value} °C")
+        info_message += f"수온 정보: {tw_value} °C\n"
     except (KeyError, IndexError) as e:
         water_temp_label.config(text="수온 정보를 가져올 수 없습니다.")
+        info_message += "수온 정보를 가져올 수 없습니다.\n"
 
     # 조석 정보 업데이트
     try:
@@ -226,8 +241,10 @@ def search_beach_info():
                 tiType = "알 수 없음"
             tide_info += f"{item['tiStnld']} - {item['tiTime']} - {tiType} - {item['tilevel']} cm\n"
         tide_label.config(text=f"조석 정보\n{tide_info}")
+        info_message += f"조석 정보:\n{tide_info}\n"
     except (KeyError, IndexError) as e:
         tide_label.config(text="조석 정보를 가져올 수 없습니다.")
+        info_message += "조석 정보를 가져올 수 없습니다.\n"
 
     # 일출일몰 정보 업데이트
     try:
@@ -235,8 +252,12 @@ def search_beach_info():
         sunrise = sun_info['sunrise']
         sunset = sun_info['sunset']
         sunrise_sunset_label.config(text=f"일출 시간 : {sunrise}\n일몰 시간 : {sunset}")
+        info_message += f"일출 시간: {sunrise}\n일몰 시간: {sunset}\n"
     except (KeyError, IndexError) as e:
         sunrise_sunset_label.config(text="일출일몰 정보를 가져올 수 없습니다.")
+        info_message += "일출일몰 정보를 가져올 수 없습니다.\n"
+
+    return info_message
 
 # 해수욕장과의 거리를 계산하여 정렬하는 함수
 def find_nearest_beaches(df, user_location):
@@ -403,7 +424,7 @@ def open_input_telegramID():
     close_button = Button(telegram_window, text="닫기", command=telegram_window.destroy)
     close_button.pack(pady=10)
 
-def download_image(search_term, num_images=5):
+def download_image(search_term, num_images=1):
     url = f"https://www.google.com/search?q={search_term}&tbm=isch"
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(url, headers=headers)
@@ -413,12 +434,16 @@ def download_image(search_term, num_images=5):
     image_urls = [img['src'] for img in image_tags[1:num_images + 1]]
 
     os.makedirs('images', exist_ok=True)
+    image_paths = []
 
     for i, img_url in enumerate(image_urls):
         img_data = requests.get(img_url).content
+        img_path = f'images/{search_term}_{i + 1}.jpg'
         with open(f'images/{search_term}_{i + 1}.jpg', 'wb') as handler:
             handler.write(img_data)
         print(f"Image {i + 1} downloaded")
+        image_paths.append(img_path)
+    return image_paths
 
 
 def display_image(image_path, parent_frame, width, height):
@@ -430,6 +455,61 @@ def display_image(image_path, parent_frame, width, height):
     image_label = Label(parent_frame, image=im)
     image_label.image = im
     image_label.pack()
+
+
+# 들어오는 텔레그램 메시지를 처리하는 함수
+def handle(msg):
+    global beach_code
+    content_type, chat_type, chat_id = telepot.glance(msg)
+
+    if content_type == 'location':
+        latitude = msg['location']['latitude']
+        longitude = msg['location']['longitude']
+        user_location = (latitude, longitude)
+        nearest_beaches = find_nearest_beaches(beach_data, user_location)
+        top_5_beaches = nearest_beaches.head(5)
+        response_message = "근처의 해수욕장 목록:\n"
+        for i, row in top_5_beaches.iterrows():
+            response_message += f"{i + 1}. {row['해수욕장']} - 거리: {row['distance']:.2f} km\n"
+        response_message += "\n원하는 해수욕장의 이름을 입력해 주세요."
+        bot.sendMessage(chat_id, response_message)
+
+    elif content_type == 'text':
+        beach_name = msg['text']
+        if beach_name in beach_data['해수욕장'].values:
+            selected_row = beach_data[beach_data['해수욕장'] == beach_name].iloc[0]
+            beach_code = selected_row.name + 1
+            beach_info = search_beach_info()
+            if beach_info:
+                bot.sendMessage(chat_id, beach_info)
+                image_paths = download_image(beach_name)
+                for img_path in image_paths:
+                    bot.sendPhoto(chat_id, photo=open(img_path, 'rb'))
+            else:
+                bot.sendMessage(chat_id, "선택한 해수욕장에 대한 정보를 찾을 수 없습니다.")
+        else:
+            # 입력한 텍스트가 해수욕장 이름이 아닌 경우 주소로 간주하여 위치를 찾음
+            location = get_lat_lng(beach_name)
+            if location:
+                nearest_beaches = find_nearest_beaches(beach_data, location)
+                top_5_beaches = nearest_beaches.head(5)
+                response_message = "근처의 해수욕장 목록:\n"
+                for i, row in top_5_beaches.iterrows():
+                    response_message += f"{i + 1}. {row['해수욕장']} - 거리: {row['distance']:.2f} km\n"
+                response_message += "\n원하는 해수욕장의 이름을 입력해 주세요."
+                bot.sendMessage(chat_id, response_message)
+            else:
+                bot.sendMessage(chat_id, "입력한 해수욕장을 찾을 수 없습니다. 다시 입력해 주세요.")
+
+
+# 메시지를 수신 대기
+MessageLoop(bot, handle).run_as_thread()
+
+# print('메시지를 기다리고 있습니다...')
+#
+# # 프로그램이 종료되지 않도록 유지
+# while True:
+#     pass
 
 
 def MainGUI():
@@ -541,7 +621,7 @@ image_path = ""
 
 excel_file_path = "기상청48_전국해수욕장_날씨_조회서비스_오픈API활용가이드_최종/기상청48_전국해수욕장_날씨_조회서비스_위경도.xlsx"
 beach_data = load_beach_data(excel_file_path)
-print(spam.strlen("hello world"))
+#print(spam.strlen("hello world"))
 MainGUI()
 
 # 앱 비밀번호: ttxw chmn hlbx yyzm
