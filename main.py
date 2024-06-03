@@ -7,7 +7,12 @@ import googlemaps
 import pandas as pd
 from geopy.distance import geodesic
 from bs4 import BeautifulSoup
-
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+import spam
 
 # Google API 키 설정
 Google_API_Key = 'AIzaSyB3wJJMRzVwJBGLJXkfLOEHXWHH2nV6lXw'
@@ -15,6 +20,41 @@ Google_API_Key = 'AIzaSyB3wJJMRzVwJBGLJXkfLOEHXWHH2nV6lXw'
 # Google Maps 클라이언트 초기화
 gmaps = googlemaps.Client(key=Google_API_Key)
 zoom = 13
+
+def send_email_gmail(subject, body, to_email, from_email, password, attachment_path=None):
+    # SMTP 서버와 포트 설정
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+
+    # 메시지 구성
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
+
+    # 이미지 첨부
+    if attachment_path:
+        with open(attachment_path, 'rb') as attachment:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(attachment.read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', f"attachment; filename= {os.path.basename(attachment_path)}")
+            msg.attach(part)
+
+    try:
+        # SMTP 서버에 연결
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # TLS 보안 시작
+        server.login(from_email, password)  # 로그인
+
+        # 이메일 보내기
+        server.sendmail(from_email, to_email, msg.as_string())
+        print("이메일을 성공적으로 보냈습니다.")
+    except Exception as e:
+        print(f"이메일 전송 실패: {e}")
+    finally:
+        server.quit()  # 서버 연결 종료
 
 def get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_num, num_of_rows=10, page_no=1, data_type='JSON'):
     url = "http://apis.data.go.kr/1360000/BeachInfoservice/getUltraSrtFcstBeach"
@@ -335,6 +375,7 @@ def open_weather_inform():
     close_button.pack(pady=10)
 
 def open_input_gmail():
+    global mail_entry, port
     gmail_window = Toplevel()
     gmail_window.title("Gmail")
     gmail_window.iconbitmap("icon.ico")
@@ -344,6 +385,12 @@ def open_input_gmail():
 
     close_button = Button(gmail_window, text="닫기", command=gmail_window.destroy)
     close_button.pack(pady=10)
+
+    subject = "해수욕장 정보"
+    to_email = mail_entry.get()
+    password = "ttxwchmnhlbxyyzm"
+    from_email = "ehdxorhrl@gmail.com"
+    send_email_gmail(subject, body, to_email, from_email, password)
 
 def open_input_telegramID():
     telegram_window = Toplevel()
@@ -386,7 +433,7 @@ def display_image(image_path, parent_frame, width, height):
 
 
 def MainGUI():
-    global location_entry, nearby_listbox, wave_label, water_temp_label, tide_label, sunrise_sunset_label, map_label, image_frame, search_term, image_path
+    global location_entry, nearby_listbox, wave_label, water_temp_label, tide_label, sunrise_sunset_label, map_label, image_frame, search_term, image_path, mail_entry
     window = Tk()
     window.geometry("600x800")
     window.title("놀러와요 해수욕장")
@@ -473,6 +520,9 @@ def MainGUI():
     telegram_image = telegram_image.resize((40, 40), Image.Resampling.LANCZOS)  # Adjust size as needed
     telegram_photo = ImageTk.PhotoImage(telegram_image)
 
+    mail_entry = Entry(contact_frame)
+    mail_entry.pack(side=LEFT, padx=20, fill=X, expand=True)
+
     gmail_button = Button(contact_frame, image=gmail_photo, command=open_input_gmail)
     gmail_button.pack(side=LEFT, padx=20, pady=5, expand=True)
 
@@ -491,4 +541,7 @@ image_path = ""
 
 excel_file_path = "기상청48_전국해수욕장_날씨_조회서비스_오픈API활용가이드_최종/기상청48_전국해수욕장_날씨_조회서비스_위경도.xlsx"
 beach_data = load_beach_data(excel_file_path)
+print(spam.strlen("hello world"))
 MainGUI()
+
+# 앱 비밀번호: ttxw chmn hlbx yyzm
