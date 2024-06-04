@@ -65,7 +65,7 @@ def send_email_gmail(subject, body, to_email, from_email, password, attachment_p
     finally:
         server.quit()  # 서버 연결 종료
 
-def get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_num, num_of_rows=10, page_no=1, data_type='JSON'):
+def get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_num, num_of_rows=60, page_no=1, data_type='JSON'):
     url = "http://apis.data.go.kr/1360000/BeachInfoservice/getUltraSrtFcstBeach"
     params = {
         'serviceKey': service_key,
@@ -196,9 +196,9 @@ def get_tw_buoy_beach(service_key, search_time, beach_num, num_of_rows=10, page_
 def search_beach_info():
     global weather_data
     service_key = "J0vWouXboOOX6XyFANTjJQuyZagHIYvxwVy2K6LaSXLyCCPho9deGFO51xcBuhqYDTXAMwMe7uQCY5G5LL1bDw=="
-    base_date = "20240603"
+    base_date = "20240604"
     base_time = "1230"
-    search_time = "202205011600"
+    search_time = "202406041600"
 
     # Collecting data from all APIs
     weather_data = get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_code)
@@ -343,17 +343,17 @@ def open_weather_inform():
     second_window.title("날씨 예보")
     second_window.geometry("400x400")
 
-    # 초단기 예보
+    # 초단기 예보 데이터 해석 및 표시
     forecast_data = {
-        'T1H': None,
-        'RN1': None,
-        'SKY': None,
-        'UUU': None,
-        'VVV': None,
-        'REH': None,
-        'PTY': None,
-        'VEC': None,
-        'WSD': None
+        'T1H': 'N/A',
+        'RN1': 'N/A',
+        'SKY': 'N/A',
+        'UUU': 'N/A',
+        'VVV': 'N/A',
+        'REH': 'N/A',
+        'PTY': 'N/A',
+        'VEC': 'N/A',
+        'WSD': 'N/A'
     }
     pty_dict = {
         '0': '없음',
@@ -364,6 +364,19 @@ def open_weather_inform():
         '6': '빗방울눈날림',
         '7': '눈날림'
     }
+    sky_dict = {
+        '0': '맑음',
+        '1': '맑음',
+        '2': '맑음',
+        '3': '맑음',
+        '4': '맑음',
+        '5': '맑음',
+        '6': '구름많음',
+        '7': '구름많음',
+        '8': '구름많음',
+        '9': '흐림',
+        '10': '흐림'
+    }
 
     try:
         items = weather_data['response']['body']['items']['item']
@@ -372,6 +385,8 @@ def open_weather_inform():
             if category in forecast_data:
                 if category == 'PTY':
                     forecast_data[category] = pty_dict.get(item['fcstValue'], '알 수 없음')
+                elif category == 'SKY':
+                    forecast_data[category] = sky_dict.get(item['fcstValue'], '알 수 없음')
                 else:
                     forecast_data[category] = item['fcstValue']
 
@@ -389,6 +404,7 @@ def open_weather_inform():
         weather_label = Label(second_window, text=forecast_info)
         weather_label.pack(pady=20)
     except (KeyError, IndexError) as e:
+        print(f"Error parsing weather data: {e}")
         weather_label = Label(second_window, text="초단기예보 정보를 가져올 수 없습니다.")
         weather_label.pack(pady=20)
 
