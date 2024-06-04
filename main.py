@@ -210,6 +210,59 @@ def search_beach_info():
 
     info_message = ""
 
+    # 초단기 예보 정보
+    try:
+        items = weather_data['response']['body']['items']['item']
+        forecast_data = {
+            'T1H': 'N/A',
+            'RN1': 'N/A',
+            'SKY': 'N/A',
+            'UUU': 'N/A',
+            'VVV': 'N/A',
+            'REH': 'N/A',
+            'PTY': 'N/A',
+            'VEC': 'N/A',
+            'WSD': 'N/A'
+        }
+        pty_dict = {
+            '0': '없음',
+            '1': '비',
+            '2': '비/눈',
+            '3': '눈',
+            '5': '빗방울',
+            '6': '빗방울눈날림',
+            '7': '눈날림'
+        }
+        sky_dict = {
+            '1': '맑음',
+            '3': '구름많음',
+            '4': '흐림'
+        }
+
+        for item in items:
+            category = item['category']
+            if category in forecast_data:
+                if category == 'PTY':
+                    forecast_data[category] = pty_dict.get(item['fcstValue'], '알 수 없음')
+                elif category == 'SKY':
+                    forecast_data[category] = sky_dict.get(item['fcstValue'], '알 수 없음')
+                else:
+                    forecast_data[category] = item['fcstValue']
+
+        info_message += (
+            f"기온: {forecast_data['T1H']} ℃\n"
+            f"1시간 강수량: {forecast_data['RN1']} mm\n"
+            f"하늘상태: {forecast_data['SKY']}\n"
+            f"동서바람성분: {forecast_data['UUU']} m/s\n"
+            f"남북바람성분: {forecast_data['VVV']} m/s\n"
+            f"습도: {forecast_data['REH']} %\n"
+            f"강수형태: {forecast_data['PTY']}\n"
+            f"풍향: {forecast_data['VEC']} deg\n"
+            f"풍속: {forecast_data['WSD']} m/s\n"
+        )
+    except (KeyError, IndexError):
+        info_message += "초단기 예보 정보를 가져올 수 없습니다.\n"
+
     # 파고 정보 업데이트
     try:
         wh_value = wave_data['response']['body']['items']['item'][0]['wh']
@@ -498,8 +551,8 @@ def handle(msg):
             beach_info = search_beach_info()
             if beach_info:
                 bot.sendMessage(chat_id, beach_info)
-                image_paths = download_image(beach_name)
-                for img_path in image_paths:
+                img_path = download_image(beach_name)
+                if img_path:
                     bot.sendPhoto(chat_id, photo=open(img_path, 'rb'))
             else:
                 bot.sendMessage(chat_id, "선택한 해수욕장에 대한 정보를 찾을 수 없습니다.")
@@ -516,8 +569,6 @@ def handle(msg):
                 bot.sendMessage(chat_id, response_message)
             else:
                 bot.sendMessage(chat_id, "입력한 해수욕장을 찾을 수 없습니다. 다시 입력해 주세요.")
-
-
 # 메시지를 수신 대기
 MessageLoop(bot, handle).run_as_thread()
 
