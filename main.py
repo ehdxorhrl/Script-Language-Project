@@ -634,6 +634,14 @@ def MainGUI():
     window.iconbitmap("icon.ico")
     window.resizable(False, False)
 
+    # 캔버스를 사용하여 배경 이미지 설정
+    canvas = Canvas(window, width=600, height=800)
+    canvas.pack(fill="both", expand=True)
+
+    # 배경 이미지 로드dD
+    bg_image = PhotoImage(file="background.png")
+    canvas.create_image(0, 0, anchor="nw", image=bg_image)
+
     # 위치 입력 및 검색
     location_frame = Frame(window)
     location_frame.place(x=10, y=10, width=580, height=50)
