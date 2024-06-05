@@ -198,7 +198,7 @@ def get_tw_buoy_beach(service_key, search_time, beach_num, num_of_rows=10, page_
         return f"Error: {response.status_code}"
 
 def search_beach_info():
-    global weather_data, service_key
+    global weather_data, service_key, base_date
     service_key = "J0vWouXboOOX6XyFANTjJQuyZagHIYvxwVy2K6LaSXLyCCPho9deGFO51xcBuhqYDTXAMwMe7uQCY5G5LL1bDw=="
     base_date = "20240604"
     base_time = "1800"
@@ -494,7 +494,7 @@ def open_graph():
     graph_window.geometry("800x600")  # 창 크기 조정
 
     #service_key = "YOUR_KOREA_WEATHER_API_KEY"
-    base_date = "20240604"
+    #base_date = "20240604"
     base_time = "0600"  # 6시부터 시작
 
     times = []
