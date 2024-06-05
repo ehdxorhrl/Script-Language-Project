@@ -16,6 +16,10 @@ import telepot
 from telepot.loop import MessageLoop
 import requests
 import sys
+import threading
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import datetime
 sys.path.append(r'C:\Python\스크립트 언어\Script-Language-Project')
 #import spam
 
@@ -194,10 +198,10 @@ def get_tw_buoy_beach(service_key, search_time, beach_num, num_of_rows=10, page_
         return f"Error: {response.status_code}"
 
 def search_beach_info():
-    global weather_data
+    global weather_data, service_key
     service_key = "J0vWouXboOOX6XyFANTjJQuyZagHIYvxwVy2K6LaSXLyCCPho9deGFO51xcBuhqYDTXAMwMe7uQCY5G5LL1bDw=="
     base_date = "20240604"
-    base_time = "1230"
+    base_time = "1800"
     search_time = "202406041600"
 
     # Collecting data from all APIs
@@ -482,16 +486,58 @@ def open_input_gmail():
     from_email = "ehdxorhrl@gmail.com"
     send_email_gmail(subject, body, to_email, from_email, password)
 
-def open_input_telegramID():
-    telegram_window = Toplevel()
-    telegram_window.title("Telegram")
-    telegram_window.iconbitmap("icon.ico")
 
-    label = Label(telegram_window, text="telegramID를 입력하세요.")
-    label.pack(pady=20)
+def open_graph():
+    graph_window = Toplevel()
+    graph_window.title("Graph")
+    graph_window.iconbitmap("icon.ico")
+    graph_window.geometry("800x600")  # 창 크기 조정
 
-    close_button = Button(telegram_window, text="닫기", command=telegram_window.destroy)
+    #service_key = "YOUR_KOREA_WEATHER_API_KEY"
+    base_date = "20240604"
+    base_time = "0600"  # 6시부터 시작
+
+    times = []
+    temperatures = []
+
+    try:
+        # 24시간 동안의 데이터를 수집
+        for hour in range(24):
+            base_time = f"{hour:02d}00"
+            weather_data = get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_code)
+            items = weather_data['response']['body']['items']['item']
+            for item in items:
+                if item['category'] == 'T1H':
+                    forecast_time = item['fcstTime']
+                    temperature = float(item['fcstValue'])
+                    times.append(base_date + forecast_time)
+                    temperatures.append(temperature)
+
+        # times를 datetime 형식으로 변환
+        times = [datetime.datetime.strptime(t, "%Y%m%d%H%M") for t in times]
+
+    except (KeyError, IndexError) as e:
+        print(f"Error parsing weather data: {e}")
+        return
+
+    # 그래프 그리기
+    fig, ax = plt.subplots()
+    ax.bar(times, temperatures, width=0.03)
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Temperature (℃)')
+    ax.set_title('24-Hour Temperature Forecast')
+    plt.xticks(rotation=45)  # x축 레이블 각도 조정
+    plt.tight_layout()  # 레이아웃 자동 조정
+
+    canvas = FigureCanvasTkAgg(fig, master=graph_window)
+    canvas.draw()
+    canvas.get_tk_widget().pack()
+
+    close_button = Button(graph_window, text="닫기", command=graph_window.destroy)
     close_button.pack(pady=10)
+
+
+
 
 def download_image(search_term, num_images=1):
     url = f"https://www.google.com/search?q={search_term}&tbm=isch"
@@ -574,14 +620,11 @@ def handle(msg):
             else:
                 bot.sendMessage(chat_id, "입력한 해수욕장을 찾을 수 없습니다. 다시 입력해 주세요.")
 # 메시지를 수신 대기
-MessageLoop(bot, handle).run_as_thread()
+# MessageLoop(bot, handle).run_as_thread()
 
-# print('메시지를 기다리고 있습니다...')
-#
-# # 프로그램이 종료되지 않도록 유지
-# while True:
-#     pass
-
+def run_bot():
+    MessageLoop(bot, handle).run_forever()
+    print('Listening ...')
 
 def MainGUI():
     global location_entry, nearby_listbox, wave_label, water_temp_label, tide_label, sunrise_sunset_label, map_label, image_frame, search_term, image_path, mail_entry
@@ -667,9 +710,9 @@ def MainGUI():
     gmail_image = gmail_image.resize((40, 40), Image.Resampling.LANCZOS)  # Adjust size as needed
     gmail_photo = ImageTk.PhotoImage(gmail_image)
 
-    telegram_image = Image.open("텔레그램.png")
-    telegram_image = telegram_image.resize((40, 40), Image.Resampling.LANCZOS)  # Adjust size as needed
-    telegram_photo = ImageTk.PhotoImage(telegram_image)
+    graph_image = Image.open("그래프.png")
+    graph_image = graph_image.resize((40, 40), Image.Resampling.LANCZOS)  # Adjust size as needed
+    graph_photo = ImageTk.PhotoImage(graph_image)
 
     mail_entry = Entry(contact_frame)
     mail_entry.pack(side=LEFT, padx=20, fill=X, expand=True)
@@ -677,11 +720,11 @@ def MainGUI():
     gmail_button = Button(contact_frame, image=gmail_photo, command=open_input_gmail)
     gmail_button.pack(side=LEFT, padx=20, pady=5, expand=True)
 
-    telegram_button = Button(contact_frame, image=telegram_photo, command=open_input_telegramID)
-    telegram_button.pack(side=RIGHT, padx=20, pady=5, expand=True)
+    graph_button = Button(contact_frame, image=graph_photo, command=open_graph)
+    graph_button.pack(side=RIGHT, padx=20, pady=5, expand=True)
 
     gmail_button.image = gmail_photo
-    telegram_button.image = telegram_photo
+    graph_button.image = graph_photo
 
     window.mainloop()
 
@@ -693,6 +736,7 @@ image_path = ""
 excel_file_path = "기상청48_전국해수욕장_날씨_조회서비스_오픈API활용가이드_최종/기상청48_전국해수욕장_날씨_조회서비스_위경도.xlsx"
 beach_data = load_beach_data(excel_file_path)
 #print(spam.strlen("hello world"))
+threading.Thread(target=run_bot).start()
 MainGUI()
 
 # 앱 비밀번호: ttxw chmn hlbx yyzm
