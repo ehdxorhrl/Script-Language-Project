@@ -508,11 +508,13 @@ def download_image(search_term, num_images=1):
     for i, img_url in enumerate(image_urls):
         img_data = requests.get(img_url).content
         img_path = f'images/{search_term}_{i + 1}.jpg'
-        with open(f'images/{search_term}_{i + 1}.jpg', 'wb') as handler:
+        with open(img_path, 'wb') as handler:
             handler.write(img_data)
         print(f"Image {i + 1} downloaded")
         image_paths.append(img_path)
+
     return image_paths
+
 
 
 def display_image(image_path, parent_frame, width, height):
@@ -551,9 +553,11 @@ def handle(msg):
             beach_info = search_beach_info()
             if beach_info:
                 bot.sendMessage(chat_id, beach_info)
-                img_path = download_image(beach_name)
-                if img_path:
-                    bot.sendPhoto(chat_id, photo=open(img_path, 'rb'))
+                image_paths = download_image(beach_name)
+                if image_paths:
+                    for img_path in image_paths:
+                        with open(img_path, 'rb') as photo:
+                            bot.sendPhoto(chat_id, photo)
             else:
                 bot.sendMessage(chat_id, "선택한 해수욕장에 대한 정보를 찾을 수 없습니다.")
         else:
