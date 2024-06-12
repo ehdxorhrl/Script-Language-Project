@@ -19,7 +19,7 @@ import sys
 import threading
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import datetime
+from datetime import datetime, timedelta
 import spam
 sys.path.append(r'C:\Python\스크립트 언어\Script-Language-Project')
 
@@ -32,6 +32,18 @@ zoom = 13
 
 # 봇의 API 토큰
 bot = telepot.Bot('7314248046:AAFoNlzyPuPH07inksK3kD6SI8D569NMXwg')
+
+def open_input_gmail():
+    global beach_name
+
+    subject = "놀러와요 해수욕장에서 요청한 " + beach_name + " 정보입니다."
+    to_email = mail_entry.get()
+    password = "ttxwchmnhlbxyyzm"
+    from_email = "ehdxorhrl@gmail.com"
+    body = search_beach_info()
+
+    img_path = "images/" + beach_name + "_1.jpg"
+    send_email_gmail(subject, body, to_email, from_email, password, img_path)
 
 def send_email_gmail(subject, body, to_email, from_email, password, attachment_path):
     # SMTP 서버와 포트 설정
@@ -64,8 +76,10 @@ def send_email_gmail(subject, body, to_email, from_email, password, attachment_p
         # 이메일 보내기
         server.sendmail(from_email, to_email, msg.as_string())
         print("이메일을 성공적으로 보냈습니다.")
+        return True
     except Exception as e:
         print(f"이메일 전송 실패: {e}")
+        return False
     finally:
         server.quit()  # 서버 연결 종료
 
@@ -470,56 +484,40 @@ def open_weather_inform():
     close_button = Button(second_window, text="닫기", command=second_window.destroy)
     close_button.pack(pady=10)
 
-def open_input_gmail():
-    global mail_entry, port, beach_name
-    gmail_window = Toplevel()
-    gmail_window.title("Gmail")
-    gmail_window.iconbitmap("icon.ico")
-
-    label = Label(gmail_window, text="이메일을 입력하세요.")
-    label.pack(pady=20)
-
-    close_button = Button(gmail_window, text="닫기", command=gmail_window.destroy)
-    close_button.pack(pady=10)
-
-    subject = "놀러와요 해수욕장에서 요청한 " + beach_name + " 정보입니다."
-    to_email = mail_entry.get()
-    password = "ttxwchmnhlbxyyzm"
-    from_email = "ehdxorhrl@gmail.com"
-    body = search_beach_info()
-
-    img_path = "images/" + beach_name + "_1.jpg"
-    send_email_gmail(subject, body, to_email, from_email, password, img_path)
-
 
 def open_graph():
+    global base_date, base_time
     graph_window = Toplevel()
     graph_window.title("Graph")
     graph_window.iconbitmap("icon.ico")
     graph_window.geometry("800x600")  # 창 크기 조정
 
-    #service_key = "YOUR_KOREA_WEATHER_API_KEY"
-    #base_date = "20240604"
-    base_time = "0600"  # 6시부터 시작
-
     times = []
     temperatures = []
 
     try:
+        # 전날의 날짜 계산
+        yesterday_date = (datetime.strptime(base_date, "%Y%m%d") - timedelta(days=1)).strftime("%Y%m%d")
+
+        # 현재 시간의 시간 단위를 구함 (00분으로 설정)
+        current_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+
         # 24시간 동안의 데이터를 수집
         for hour in range(24):
-            base_time = f"{hour:02d}00"
-            weather_data = get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_code)
+            next_hour = current_time + timedelta(hours=hour)
+            base_time = next_hour.strftime("%H00")
+            print(base_time)
+            weather_data = get_ultra_srt_fcst_beach(service_key, yesterday_date, base_time, beach_code)
             items = weather_data['response']['body']['items']['item']
             for item in items:
                 if item['category'] == 'T1H':
                     forecast_time = item['fcstTime']
                     temperature = float(item['fcstValue'])
-                    times.append(base_date + forecast_time)
+                    times.append(yesterday_date + forecast_time)
                     temperatures.append(temperature)
 
         # times를 datetime 형식으로 변환
-        times = [datetime.datetime.strptime(t, "%Y%m%d%H%M") for t in times]
+        times = [datetime.strptime(t, "%Y%m%d%H%M") for t in times]
 
     except (KeyError, IndexError) as e:
         print(f"Error parsing weather data: {e}")
