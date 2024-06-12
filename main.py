@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 import requests
 import io
 import os
@@ -43,7 +44,12 @@ def open_input_gmail():
     body = search_beach_info()
 
     img_path = "images/" + beach_name + "_1.jpg"
-    send_email_gmail(subject, body, to_email, from_email, password, img_path)
+    success = send_email_gmail(subject, body, to_email, from_email, password, img_path)
+
+    if success:
+        messagebox.showinfo("이메일 전송 성공", "이메일을 성공적으로 보냈습니다.")
+    else:
+        messagebox.showerror("이메일 전송 실패", "이메일을 보내는 동안 문제가 발생했습니다. 다시 시도해주세요.")
 
 def send_email_gmail(subject, body, to_email, from_email, password, attachment_path):
     # SMTP 서버와 포트 설정
@@ -728,10 +734,10 @@ def MainGUI():
     mail_entry = Entry(contact_frame)
     mail_entry.pack(side=LEFT, padx=20, fill=X, expand=True)
 
-    gmail_button = Button(contact_frame, image=gmail_photo, command=open_input_gmail)
+    gmail_button = Button(contact_frame, image=gmail_photo, command=open_input_gmail, bg="green")
     gmail_button.pack(side=LEFT, padx=20, pady=5, expand=True)
 
-    graph_button = Button(contact_frame, image=graph_photo, command=open_graph)
+    graph_button = Button(contact_frame, image=graph_photo, command=open_graph, bg="green")
     graph_button.pack(side=RIGHT, padx=20, pady=5, expand=True)
 
     gmail_button.image = gmail_photo
