@@ -20,8 +20,8 @@ import threading
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import datetime
+import spam
 sys.path.append(r'C:\Python\스크립트 언어\Script-Language-Project')
-#import spam
 
 # Google API 키 설정
 Google_API_Key = 'AIzaSyB3wJJMRzVwJBGLJXkfLOEHXWHH2nV6lXw'
@@ -33,8 +33,7 @@ zoom = 13
 # 봇의 API 토큰
 bot = telepot.Bot('7314248046:AAFoNlzyPuPH07inksK3kD6SI8D569NMXwg')
 
-
-def send_email_gmail(subject, body, to_email, from_email, password, attachment_path=None):
+def send_email_gmail(subject, body, to_email, from_email, password, attachment_path):
     # SMTP 서버와 포트 설정
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
@@ -46,13 +45,15 @@ def send_email_gmail(subject, body, to_email, from_email, password, attachment_p
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'plain'))
 
+    filename = 'image.jpg'
+
     # 이미지 첨부
     if attachment_path:
         with open(attachment_path, 'rb') as attachment:
             part = MIMEBase('application', 'octet-stream')
             part.set_payload(attachment.read())
             encoders.encode_base64(part)
-            part.add_header('Content-Disposition', f"attachment; filename= {os.path.basename(attachment_path)}")
+            part.add_header('Content-Disposition', f'attachment; filename= {filename}')
             msg.attach(part)
 
     try:
@@ -60,7 +61,6 @@ def send_email_gmail(subject, body, to_email, from_email, password, attachment_p
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()  # TLS 보안 시작
         server.login(from_email, password)  # 로그인
-
         # 이메일 보내기
         server.sendmail(from_email, to_email, msg.as_string())
         print("이메일을 성공적으로 보냈습니다.")
@@ -200,9 +200,11 @@ def get_tw_buoy_beach(service_key, search_time, beach_num, num_of_rows=10, page_
 def search_beach_info():
     global weather_data, service_key, base_date
     service_key = "J0vWouXboOOX6XyFANTjJQuyZagHIYvxwVy2K6LaSXLyCCPho9deGFO51xcBuhqYDTXAMwMe7uQCY5G5LL1bDw=="
-    base_date = "20240604"
-    base_time = "1800"
-    search_time = "202406041600"
+    base_date, base_time, search_time = spam.get_datetime()
+
+    print(f"Base Date: {base_date}")
+    print(f"Base Time: {base_time}")
+    print(f"Search Time: {search_time}")
 
     # Collecting data from all APIs
     weather_data = get_ultra_srt_fcst_beach(service_key, base_date, base_time, beach_code)
@@ -469,7 +471,7 @@ def open_weather_inform():
     close_button.pack(pady=10)
 
 def open_input_gmail():
-    global mail_entry, port
+    global mail_entry, port, beach_name
     gmail_window = Toplevel()
     gmail_window.title("Gmail")
     gmail_window.iconbitmap("icon.ico")
@@ -480,11 +482,14 @@ def open_input_gmail():
     close_button = Button(gmail_window, text="닫기", command=gmail_window.destroy)
     close_button.pack(pady=10)
 
-    subject = "해수욕장 정보"
+    subject = "놀러와요 해수욕장에서 요청한 " + beach_name + " 정보입니다."
     to_email = mail_entry.get()
     password = "ttxwchmnhlbxyyzm"
     from_email = "ehdxorhrl@gmail.com"
-    send_email_gmail(subject, body, to_email, from_email, password)
+    body = search_beach_info()
+
+    img_path = "images/" + beach_name + "_1.jpg"
+    send_email_gmail(subject, body, to_email, from_email, password, img_path)
 
 
 def open_graph():
